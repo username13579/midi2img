@@ -1,6 +1,7 @@
 from music21 import converter, instrument, note, chord
 import sys
 import numpy as np
+from PIL import Image
 from imageio import imwrite
 
 def extractNote(element):
@@ -35,8 +36,13 @@ def get_notes(notes_to_parse):
 
     return {"start":start, "pitch":notes, "dur":durations}
 
+def is_empty(list):
+    for item in list:
+        if item != 0:
+            return False
+    return True
 
-def midi2image(midi_path, max_repetitions = float("inf"), resolution = 0.25, lowerBoundNote = 21, upperBoundNote = 127, maxSongLength = 100):
+def midi2image(midi_path, resolution = 0.25, lowerBoundNote = 21, upperBoundNote = 127, maxSongLength = 100):
     mid = converter.parse(midi_path)
 
     instruments = instrument.partitionByInstrument(mid)
@@ -69,31 +75,45 @@ def midi2image(midi_path, max_repetitions = float("inf"), resolution = 0.25, low
         durs = values["dur"]
         starts = values["start"]
 
-        index = 0
-        while index < max_repetitions:
-            matrix = np.zeros((upperBoundNote-lowerBoundNote,maxSongLength))
+        matrix = np.zeros((maxSongLength, upperBoundNote-lowerBoundNote))
+        
+        np.set_printoptions(threshold=sys.maxsize)
 
+        for dur, start, pitch in zip(durs, starts, pitches):
+            dur = int(dur/resolution)
+            start = int(start/resolution)
 
-            for dur, start, pitch in zip(durs, starts, pitches):
-                dur = int(dur/resolution)
-                start = int(start/resolution)
+            if not start > 0 or not dur+start < 0:
+                for j in range(start,start+dur):
+                    if j  >= 0 and j  < maxSongLength:
+                        matrix[j, pitch-lowerBoundNote] = 255
 
-                if not start > index*(maxSongLength+1) or not dur+start < index*maxSongLength:
-                    for j in range(start,start+dur):
-                        if j - index*maxSongLength >= 0 and j - index*maxSongLength < maxSongLength:
-                            matrix[pitch-lowerBoundNote,j - index*maxSongLength] = 255
-
-            if matrix.any(): # If matrix contains no notes (only zeros) don't save it
-                imwrite(midi_path.split("/")[-1].replace(".mid",f"_{instrument_name}_{index}.png"),matrix.astype(np.uint8))
-                index += 1
-            else:
-                break
+        if matrix.any(): # If matrix contains no notes (only zeros) don't save it
+            trimmed_list = matrix
+            # trim back
+            while is_empty(trimmed_list[-1]):
+                trimmed_list = trimmed_list[:-1]
+                print(1)
+            
+            # trim front
+            while is_empty(trimmed_list[0]):
+                trimmed_list = trimmed_list[1:]
+                print(2)
+            
+            imwrite("image.png",np.matrix(np.array(trimmed_list)).astype(np.uint8))
+            im = Image.open("image.png")
+            im = im.rotate(90, expand=True)
+            im = im.resize((3840,106))
+            im.show()
+            im.save('rotated.png')
+        else:
+            break
 
 if __name__ == "__main__":
     midi_path = sys.argv[1]
 
     if len(sys.argv) >= 3:
         max_repetitions = int(sys.argv[2])
-        midi2image(midi_path, max_repetitions)
+        midi2image(midi_path, max_repetitions, maxSongLength=5000)
     else:
-        midi2image(midi_path)
+        midi2image(midi_path, maxSongLength=5000)
