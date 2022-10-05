@@ -42,7 +42,7 @@ def is_empty(list):
             return False
     return True
 
-def midi2image(midi_path, resolution = 0.25, lowerBoundNote = 21, upperBoundNote = 127, maxSongLength = 100):
+def midi2image(midi_path, resolution = 0.25, upperBoundNote = 127, maxSongLength = 100):
     mid = converter.parse(midi_path)
 
     instruments = instrument.partitionByInstrument(mid)
@@ -75,7 +75,7 @@ def midi2image(midi_path, resolution = 0.25, lowerBoundNote = 21, upperBoundNote
         durs = values["dur"]
         starts = values["start"]
 
-        matrix = np.zeros((maxSongLength, upperBoundNote-lowerBoundNote))
+        matrix = np.zeros((maxSongLength, upperBoundNote))
         
         np.set_printoptions(threshold=sys.maxsize)
 
@@ -86,7 +86,7 @@ def midi2image(midi_path, resolution = 0.25, lowerBoundNote = 21, upperBoundNote
             if not start > 0 or not dur+start < 0:
                 for j in range(start,start+dur):
                     if j  >= 0 and j  < maxSongLength:
-                        matrix[j, pitch-lowerBoundNote] = 255
+                        matrix[j, pitch] = 255
 
         if matrix.any(): # If matrix contains no notes (only zeros) don't save it
             trimmed_list = matrix
@@ -100,7 +100,7 @@ def midi2image(midi_path, resolution = 0.25, lowerBoundNote = 21, upperBoundNote
                 trimmed_list = trimmed_list[1:]
                 print(2)
             
-            imwrite("image.png",np.matrix(np.array(trimmed_list)).astype(np.uint8))
+            imwrite("image.png",np.matrix(np.array(trimmed_list)).astype(np.uint16))
             im = Image.open("image.png")
             im = im.rotate(90, expand=True)
             im = im.resize((3840,106))
