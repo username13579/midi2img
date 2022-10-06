@@ -42,8 +42,8 @@ def is_empty(list):
             return False
     return True
 
-def midi2image(midi_path, resolution = 0.25, upperBoundNote = 127, maxSongLength = 100):
-    mid = converter.parse(midi_path)
+def midi2image(midi_path, resolution = 0.025, upperBoundNote = 127, maxSongLength = 100):
+    mid = converter.parse(midi_path, quantizePost=False, makeNotation=False)
 
     instruments = instrument.partitionByInstrument(mid)
 
@@ -93,19 +93,17 @@ def midi2image(midi_path, resolution = 0.25, upperBoundNote = 127, maxSongLength
             # trim back
             while is_empty(trimmed_list[-1]):
                 trimmed_list = trimmed_list[:-1]
-                print(1)
             
             # trim front
             while is_empty(trimmed_list[0]):
                 trimmed_list = trimmed_list[1:]
-                print(2)
             
-            imwrite("image.png",np.matrix(np.array(trimmed_list)).astype(np.uint16))
-            im = Image.open("image.png")
+            imwrite("export/image.png",np.matrix(np.array(trimmed_list)).astype(np.uint16))
+            im = Image.open("export/image.png")
             im = im.rotate(90, expand=True)
             im = im.resize((3840,106))
             im.show()
-            im.save('rotated.png')
+            im.save('export/rotated.png')
         else:
             break
 
@@ -114,6 +112,6 @@ if __name__ == "__main__":
 
     if len(sys.argv) >= 3:
         max_repetitions = int(sys.argv[2])
-        midi2image(midi_path, max_repetitions, maxSongLength=5000)
+        midi2image(midi_path, max_repetitions, maxSongLength=500000)
     else:
-        midi2image(midi_path, maxSongLength=5000)
+        midi2image(midi_path, maxSongLength=500000)
