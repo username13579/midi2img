@@ -101,7 +101,7 @@ def midi2image(midi_path, resolution = 0.025, upperBoundNote = 127, maxSongLengt
             imwrite("export/image.png",np.matrix(np.array(trimmed_list)).astype(np.uint16))
             im = Image.open("export/image.png")
             im = im.rotate(90, expand=True)
-            im = im.resize((3840,106))
+            im = im.resize((7680,212))
             im.show()
             im.save('export/rotated.png')
         else:
