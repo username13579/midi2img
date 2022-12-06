@@ -1,3 +1,7 @@
+# instructions
+just do 
+python midi2img.py "path"
+
 # MIDI to Image conversion
 
 Convert MIDI files into piano roll images and back with this Python script.
